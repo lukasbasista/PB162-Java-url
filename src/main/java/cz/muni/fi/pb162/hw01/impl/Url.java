@@ -21,10 +21,7 @@ public class Url implements SmartUrl {
 
     @Override
     public String getAsString() {
-        if (this.getProtocol().equals("")) {
-            return null;
-        }
-        if (this.getHost().equals("")) {
+        if (this.getProtocol().equals("") || this.getHost().equals("")) {
             return null;
         }
 
@@ -35,12 +32,13 @@ public class Url implements SmartUrl {
         sb.append(this.getHost());
         DefaultPortResolver portResolver = new DefaultPortResolver();
         int protocolPort = portResolver.getPort(this.getProtocol());
+
         if (protocolPort != this.getPort()) {
             sb.append(":");
             sb.append(this.getPort());
         }
-        sb.append("/");
 
+        sb.append("/");
         sb.append(this.getPath());
 
         if (!this.getFragment().equals("")) {
@@ -67,23 +65,25 @@ public class Url implements SmartUrl {
 
     @Override
     public boolean isSameAs(SmartUrl url) {
-        return this.getAsString().equals(url.getAsString());
+        return url.getAsString().equals(this.getAsString());
     }
 
     @Override
     public boolean isSameAs(String url) {
         Url newUrl = new Url(url);
-        return this.getAsString().equals(newUrl.getAsString());
+        return newUrl.getAsString().equals(this.getAsString());
     }
 
     @Override
     public String getHost() {
         String host = this.url.split("://", 2)[1].split("/", 2)[0].split(":, 2")[0].split(":")[0];
-        String[] hostUnits = host.split("\\.");
-        if (hostUnits[0].equals("www") && hostUnits.length < 3) {
+        String[] hostParts = host.split("\\.");
+
+        if (hostParts[0].equals("www") && hostParts.length < 3) {
             return null;
         }
-        if (!hostUnits[0].equals("wwww") && hostUnits.length < 2) {
+
+        if (!hostParts[0].equals("www") && hostParts.length < 2) {
             return null;
         }
 
@@ -94,7 +94,7 @@ public class Url implements SmartUrl {
     public String getProtocol() {
         String[] splittedUrl = this.url.split("://", 2);
 
-        if (splittedUrl.length == 1) {
+        if (splittedUrl.length < 1) {
             return null;
         }
 
@@ -104,6 +104,7 @@ public class Url implements SmartUrl {
     @Override
     public int getPort() {
         String[] splittedUrl = this.url.split(":", 3);
+
         if (splittedUrl.length <= 2) {
             DefaultPortResolver portResolver = new DefaultPortResolver();
             return portResolver.getPort(splittedUrl[0]);
@@ -114,12 +115,13 @@ public class Url implements SmartUrl {
 
     @Override
     public String getPath() {
-        String[] arr = this.url.split("://", 2)[1].split("/", 2);
-        if (arr.length < 2) {
+        String[] splittedUrl = this.url.split("://", 2)[1].split("/", 2);
+
+        if (splittedUrl.length < 2) {
             return "";
         }
 
-        String[] pathParts = arr[1].split("[#?]", 2)[0].split("/");
+        String[] pathParts = splittedUrl[1].split("[#?]", 2)[0].split("/");
         String[] parts = new String[pathParts.length];
 
         int position = 0;
@@ -127,20 +129,12 @@ public class Url implements SmartUrl {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < pathParts.length; i++) {
-
             if (pathParts[i].equals("..")) {
-
-                if (i == 0) {
+                if ((i == 0) || (position - 1 < 0)) {
                     return "";
                 }
-
-                if (position - 1 < 0) {
-                    return "";
-                }
-
                 parts[position - 1] = null;
                 position--;
-
             }
             if (!pathParts[i].equals("..") && !pathParts[i].equals(".")) {
                 parts[position] = pathParts[i];
@@ -149,7 +143,6 @@ public class Url implements SmartUrl {
         }
 
         for (String part : parts) {
-
             if (part != null) {
                 sb.append(part);
                 sb.append("/");
@@ -168,28 +161,22 @@ public class Url implements SmartUrl {
 
     @Override
     public String getQuery() {
-        String[] arr = this.url.split("\\?", 2);
+        int keyValue;
 
-        if (arr.length < 2) {
+        String[] splittedUrl = this.url.split("\\?", 2);
+
+        if (splittedUrl.length < 2) {
             return "";
         }
-        if (arr[1].length() < 1) {
+        if (splittedUrl[1].length() < 1) {
             return "";
         }
 
-        String query = arr[1].split("#", 2)[0];
-
-        if (query == null) {
-            return null;
-        }
-
+        String query = splittedUrl[1].split("#", 2)[0];
         SortedMap<Integer, String> map = new TreeMap<>();
         String[] parts = query.split("&", -1);
 
-        int keyValue;
-
         for (String part : parts) {
-
             String[] value = part.split("=");
 
             if (value.length < 1) {
@@ -224,6 +211,4 @@ public class Url implements SmartUrl {
 
         return fragment[1];
     }
-
-
 }
