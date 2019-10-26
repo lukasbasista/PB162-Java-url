@@ -26,12 +26,12 @@ public class Url implements SmartUrl {
         }
 
         StringBuilder sb = new StringBuilder();
+        DefaultPortResolver portResolver = new DefaultPortResolver();
+        int protocolPort = portResolver.getPort(this.getProtocol());
 
         sb.append(this.getProtocol());
         sb.append("://");
         sb.append(this.getHost());
-        DefaultPortResolver portResolver = new DefaultPortResolver();
-        int protocolPort = portResolver.getPort(this.getProtocol());
 
         if (protocolPort != this.getPort()) {
             sb.append(":");
